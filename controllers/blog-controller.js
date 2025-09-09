@@ -51,6 +51,7 @@ class Controller {
                     },
                 ],
                 order: [
+                    ["is_main", "DESC"],
                     ["date", "DESC"],
                     ["id", "DESC"],
                 ],
@@ -102,10 +103,10 @@ class Controller {
     };
     getImportant = async (req, res) => {
         const { page } = req?.params;
-        const offset = (page || 1 - 1) * BLOG_COUNT;
         try {
-            const blogData = await Blog.findAll({
+            let blogImportantData = await Blog.findAll({
                 where: { is_important: true },
+                attributes: { exclude: ["body"] },
                 include: [
                     {
                         model: Img,
@@ -118,25 +119,41 @@ class Controller {
                     ["id", "DESC"],
                 ],
             });
+            if (blogImportantData.length === 0) {
+                blogImportantData = await Blog.findAll({
+                    attributes: { exclude: ["body"] },
+                    include: [
+                        {
+                            model: Img,
+                            as: "img",
+                            required: true,
+                        },
+                    ],
+                    limit: 10,
+                    order: [
+                        ["date", "DESC"],
+                        ["id", "DESC"],
+                    ],
+                });
+            }
 
-            return res.status(200).json(blogData);
+            return res.status(200).json(blogImportantData);
         } catch (e) {
             console.log(e);
             res.status(500).json(e?.message);
         }
     };
     getShort = async (req, res) => {
-        const { page } = req?.params;
-        const offset = (page || 1 - 1) * BLOG_COUNT;
         try {
             const blogData = await Blog.findAll({
-                include: [
-                    {
-                        model: Img,
-                        as: "img",
-                        required: true,
-                    },
-                ],
+                attributes: { exclude: ["body"] },
+                // include: [
+                //     {
+                //         model: Img,
+                //         as: "img",
+                //         required: true,
+                //     },
+                // ],
                 limit: 10,
                 order: [
                     ["date", "DESC"],
@@ -300,6 +317,54 @@ class Controller {
                 { where: { id } }
             );
             console.log("after");
+            return res.status(200).json(true);
+        } catch (e) {
+            console.log(e);
+            res.status(500).json(e?.message);
+        }
+    };
+    setMain = async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            if (!id)
+                return res
+                    .status(400)
+                    .json({ "root.server": "Incorrect values" });
+
+            await Blog.update(
+                {
+                    is_main: false,
+                },
+                { where: { is_main: true } }
+            );
+            await Blog.update(
+                {
+                    is_main: true,
+                },
+                { where: { id } }
+            );
+            return res.status(200).json(true);
+        } catch (e) {
+            console.log(e);
+            res.status(500).json(e?.message);
+        }
+    };
+    deleteMain = async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            if (!id)
+                return res
+                    .status(400)
+                    .json({ "root.server": "Incorrect values" });
+
+            await Blog.update(
+                {
+                    is_main: false,
+                },
+                { where: { id, is_main: true } }
+            );
             return res.status(200).json(true);
         } catch (e) {
             console.log(e);

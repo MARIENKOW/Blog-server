@@ -21,6 +21,8 @@ const BlogRouter = new Router();
 BlogRouter.post("/", autAdminMiddelware, BlogController.create);
 BlogRouter.get("/", BlogController.getAll);
 BlogRouter.get("/main", BlogController.getMain);
+BlogRouter.delete("/main/:id", autAdminMiddelware, BlogController.deleteMain);
+BlogRouter.put("/main/:id", autAdminMiddelware, BlogController.setMain);
 BlogRouter.get("/short", BlogController.getShort);
 BlogRouter.get("/important", BlogController.getImportant);
 BlogRouter.put(
@@ -28,6 +30,7 @@ BlogRouter.put(
     autAdminMiddelware,
     BlogController.setImportant
 );
+
 BlogRouter.get("/:id", BlogController.getById);
 BlogRouter.delete("/:id", autAdminMiddelware, BlogController.delete);
 BlogRouter.put("/:id", autAdminMiddelware, BlogController.update);
