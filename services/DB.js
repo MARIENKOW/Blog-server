@@ -19,7 +19,7 @@ export const sequelize = new Sequelize({
 
 (async () => {
    try {
-      await sequelize.sync();
+      await sequelize.sync({alter:true});
       console.log("All models were synchronized successfully");
    } catch (error) {
       console.log('db sync is not correct');
