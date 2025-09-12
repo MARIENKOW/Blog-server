@@ -7,6 +7,20 @@ import AdminRouter from "./routers/AdminRouter.js";
 import BlogRouter from "./routers/BlogRouter.js";
 import fileUpload from "express-fileupload";
 import VideoRouter from "./routers/VideoRouter.js";
+import { Blog } from "./models/Blog.js";
+import { Img } from "./models/Img.js";
+import { Video } from "./models/Video.js";
+import { Admin } from "./models/Admin.js";
+
+const asModels = (models) => {
+    Object.values(models).forEach((model) => {
+        if (typeof model.associate === "function") {
+            model.associate(models);
+        }
+    });
+};
+
+asModels({ Blog, Img, Video, Admin });
 
 dotenv.config();
 
@@ -38,6 +52,12 @@ app.use("/api/Blog", BlogRouter);
 app.use("/api/Video", VideoRouter);
 
 const web = http.Server(app);
+
+// process.on("warning", (warning) => {
+//     if (warning.name === "DeprecationWarning") {
+//         console.log("Deprecation warning stack:", warning.stack);
+//     }
+// });
 
 try {
     web.listen(PORT, process.env.SERVER_URL, () =>

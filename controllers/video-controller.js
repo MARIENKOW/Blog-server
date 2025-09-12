@@ -1,12 +1,5 @@
-import { Blog } from "../models/Blog.js";
-import imgService from "../services/img-service.js";
-import { Img } from "../models/Img.js";
-import config from "../config.js";
-import dayjs from "dayjs";
 import videoService from "../services/video-service.js";
 import { Video } from "../models/Video.js";
-
-const { BLOG_COUNT } = config;
 
 class Controller {
     create = async (req, res) => {
@@ -18,10 +11,11 @@ class Controller {
                     .status(400)
                     .json({ "root.server": "Incorrect values" });
 
-            const { video_id, path } = await videoService.save(video);
+            const { video_id, path, poster } = await videoService.save(video);
             const info = {
                 path: process.env.API_URL + path,
                 id: video_id,
+                poster: process.env.API_URL + poster,
             };
             return res.status(200).json(info);
         } catch (e) {
@@ -43,9 +37,9 @@ class Controller {
 
             const { id: video_id } = blogData;
 
-            await videoService.delete(video_id); //!   maybe delete
+            await videoService.delete(video_id);
 
-            return res.status(200).json(true);
+            return res.status(200).json(video_id);
         } catch (e) {
             console.log(e);
             res.status(500).json(e?.message);

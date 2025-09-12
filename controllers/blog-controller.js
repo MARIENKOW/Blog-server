@@ -4,6 +4,7 @@ import imgService from "../services/img-service.js";
 import { Img } from "../models/Img.js";
 import config from "../config.js";
 import dayjs from "dayjs";
+import { Video } from "../models/Video.js";
 
 const { BLOG_COUNT } = config;
 
@@ -11,6 +12,7 @@ class Controller {
     create = async (req, res) => {
         try {
             const { title, body, date } = req.body;
+            const videos_id = req.body["videos_id[]"];
 
             const img = req?.files?.img;
 
@@ -22,12 +24,22 @@ class Controller {
             const { img_id } = await imgService.save(img);
 
             try {
-                const { id } = await Blog.create({
+                const blog = await Blog.create({
                     title,
                     img_id,
                     body,
                     date,
                 });
+                const { id } = blog;
+                try {
+                    const videos = await Video.findAll({
+                        where: { id: videos_id },
+                    });
+
+                    await blog.setVideos(videos);
+                } catch (error) {
+                    console.log(error);
+                }
                 return res.status(200).json(id);
             } catch (error) {
                 await imgService.delete(img_id);
@@ -71,7 +83,6 @@ class Controller {
                     ? countItems - BLOG_COUNT * (countPages - 1)
                     : BLOG_COUNT,
             };
-            console.log(info);
             return res.status(200).json({ data: blogData, info });
         } catch (e) {
             console.log(e);
@@ -181,10 +192,19 @@ class Controller {
                         as: "img",
                         required: true,
                     },
+                    {
+                        model: Video,
+                        as: "videos", // 👈 важно, alias должен совпадать с ассоциацией
+                        attributes: ["id"], // только id
+                        through: { attributes: [] },
+                    },
                 ],
             });
             if (!blogData) return res.status(404).json("Not found blog");
-            return res.status(200).json(blogData);
+            return res.status(200).json({
+                ...blogData.toJSON(),
+                videos_id: blogData.videos.map((e) => e.id),
+            });
         } catch (e) {
             console.log(e);
             res.status(500).json(e?.message);
@@ -213,11 +233,11 @@ class Controller {
 
             await blogData.destroy({ where: { id: blog_id } });
 
-            try {
-                await imgService.delete(img_id); //!   maybe delete
-            } catch (error) {
-                console.log(error);
-            }
+            // try {
+            //     await imgService.delete(img_id); //!   maybe delete
+            // } catch (error) {
+            //     console.log(error);
+            // }
 
             return res.status(200).json(true);
         } catch (e) {
@@ -228,11 +248,11 @@ class Controller {
     update = async (req, res) => {
         try {
             const data = req.body;
+            const videos_id = req.body["videos_id[]"];
 
             const { id } = req.params;
 
             const img = req?.files?.img;
-            console.log(data);
 
             if (!data || !id)
                 return res
@@ -275,6 +295,16 @@ class Controller {
                     },
                     { where: { id: blogData.id } }
                 );
+
+                try {
+                    const videos = await Video.findAll({
+                        where: { id: videos_id },
+                    });
+
+                    await blogData.setVideos(videos);
+                } catch (error) {
+                    console.log(error);
+                }
             } catch (error) {
                 if (img) {
                     await imgService.delete(data.img_id);
@@ -293,7 +323,6 @@ class Controller {
         }
     };
     setImportant = async (req, res) => {
-        console.log("important -----------------");
         try {
             const { is_important } = req.body;
 
@@ -309,14 +338,12 @@ class Controller {
                 if (value === "false") return false;
                 return Boolean(value); // на случай других типов
             }
-            console.log("before");
             await Blog.update(
                 {
                     is_important: toBoolean(is_important),
                 },
                 { where: { id } }
             );
-            console.log("after");
             return res.status(200).json(true);
         } catch (e) {
             console.log(e);

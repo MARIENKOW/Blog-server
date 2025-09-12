@@ -1,6 +1,6 @@
 import { v4 } from "uuid";
 import { Img } from "../models/Img.js";
-import { unlink, existsSync, mkdirSync } from "fs";
+import { unlink, existsSync, mkdirSync, writeFileSync } from "fs";
 import path from "path";
 
 // export const nftImageFolder = "/uploads";
@@ -8,10 +8,10 @@ import path from "path";
 class ImgService {
     save = async (img) => {
         if (!img) throw new Error("img is not found");
+        const name = img?.name || ".jpg";
+        const imgName = v4() + name;
 
-        const imgName = v4() + img.name;
-
-        await this.moveFile(img, imgName);
+        await this.moveFile(img?.data || img, imgName);
 
         try {
             const path = process.env.NFT_FOLDER + "/" + imgName;
@@ -22,27 +22,26 @@ class ImgService {
             throw error;
         }
     };
+
     async moveFile(img, imgName) {
+        const uploadPath = path.resolve() + process.env.NFT_FOLDER;
+        if (!existsSync(uploadPath)) {
+            mkdirSync(uploadPath, { recursive: true });
+        }
+        writeFileSync(uploadPath + "/" + imgName, img);
+        return uploadPath;
+    }
+
+    async unlinkFile(imgName) {
         return new Promise((res, rej) => {
-            const uploadPath = path.resolve() + "/" + process.env.NFT_FOLDER;
+            const uploadPath = path.resolve() + process.env.NFT_FOLDER;
             if (!existsSync(uploadPath)) {
                 mkdirSync(uploadPath, { recursive: true });
             }
-            img.mv(uploadPath + "/" + imgName, function (err) {
+            unlink(uploadPath + "/" + imgName, (err) => {
                 if (err) return rej(err);
                 res(true);
             });
-        });
-    }
-    async unlinkFile(imgName) {
-        return new Promise((res, rej) => {
-            unlink(
-                path.resolve() + process.env.NFT_FOLDER + "/" + imgName,
-                (err) => {
-                    if (err) return rej(err);
-                    res(true);
-                }
-            );
         });
     }
 

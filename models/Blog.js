@@ -1,5 +1,7 @@
 import { sequelize } from "../services/DB.js";
 import { DataTypes } from "@sequelize/core";
+import imgService from "../services/img-service.js";
+import videoService from "../services/video-service.js";
 
 export const Blog = sequelize.define(
     "Blog",
@@ -15,7 +17,8 @@ export const Blog = sequelize.define(
         },
         img_id: {
             type: DataTypes.INTEGER,
-            allowNull: false,
+            allowNull: true,
+            columnName: "img_id",
         },
         is_main: {
             type: DataTypes.BOOLEAN,
@@ -38,6 +41,50 @@ export const Blog = sequelize.define(
     },
     {
         tableName: "blog",
-        timestamps: false,
+        timestamps: true,
+        hooks: {
+            async beforeDestroy(blog, options) {
+                const videos = await blog.getVideos({
+                    attributes: ["id"],
+                    joinTableAttributes: [],
+                });
+
+                console.log(videos);
+
+                options.videos_id = videos.map((v) => v.id);
+            },
+            async afterDestroy(post, options) {
+                try {
+                    if (post?.img?.id) {
+                        await imgService.delete(post.img.id);
+                    }
+                    console.log(options.videos_id);
+                    for (const video_id of options.videos_id) {
+                        await videoService.delete(video_id);
+                    }
+                } catch (error) {
+                    console.log(error);
+                }
+            },
+        },
     }
 );
+
+Blog.associate = (models) => {
+    Blog.belongsTo(models.Img, {
+        foreignKey: {
+            name: "img_id",
+            allowNull: true,
+            onDelete: "SET NULL",
+            onUpdate: "CASCADE",
+        },
+    });
+    Blog.belongsToMany(models.Video, {
+        through: { model: "BlogVideos", timestamps: false },
+        foreignKey: "blog_id",
+        otherKey: "video_id",
+        as: "videos",
+    });
+};
+
+// Blog.hasOne(Img, { foreignKey: "blog_id", as: "img" });

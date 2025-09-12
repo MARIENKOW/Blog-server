@@ -1,5 +1,6 @@
 import { sequelize } from "../services/DB.js";
 import { DataTypes } from "@sequelize/core";
+import imgService from "../services/img-service.js";
 
 export const Video = sequelize.define(
     "Video",
@@ -21,9 +22,40 @@ export const Video = sequelize.define(
                 return process.env.API_URL + this.getDataValue("path");
             },
         },
+        img_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+        },
     },
     {
         tableName: "video",
         timestamps: false,
+        hooks: {
+            async afterDestroy(post, options) {
+                if (!post?.img_id) return;
+                try {
+                    await imgService.delete(post.img_id);
+                } catch (error) {
+                    console.log(error);
+                }
+            },
+        },
     }
 );
+
+Video.associate = (models) => {
+    Video.belongsTo(models.Img, {
+        foreignKey: {
+            name: "img_id",
+            allowNull: true,
+            onDelete: "SET NULL",
+            onUpdate: "CASCADE",
+        },
+    });
+    Video.belongsToMany(models.Blog, {
+        through: { model: "BlogVideos", timestamps: false },
+        foreignKey: "video_id",
+        otherKey: "blog_id",
+        as: "blogs",
+    });
+};
