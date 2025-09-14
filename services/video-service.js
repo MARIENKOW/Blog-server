@@ -84,9 +84,9 @@ class VideoService {
 
         const { name: videoName, id } = video;
 
-        await video.destroy({ where: { id: video_id } });
+        await this.unlinkFile(videoName);
 
-        return this.unlinkFile(videoName);
+        return video.destroy({ where: { id: video_id } });
     }
 }
 

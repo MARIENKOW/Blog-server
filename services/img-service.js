@@ -52,9 +52,9 @@ class ImgService {
             where: { id: img_id },
         });
 
-        await Img.destroy({ where: { id: img_id } });
+        await this.unlinkFile(imgName);
 
-        return this.unlinkFile(imgName);
+        return Img.destroy({ where: { id: img_id } });
     }
 }
 

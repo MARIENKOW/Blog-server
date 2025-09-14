@@ -289,19 +289,21 @@ class Controller {
                 const updateUserData = await Blog.update(
                     {
                         ...data,
-                        is_main: toBoolean(data?.is_main),
-                        is_important: toBoolean(data?.is_main),
+                        // is_main: toBoolean(data?.is_main),
+                        // is_important: toBoolean(data?.is_main),
                         date: dayjs(data.date).format("YYYY-MM-DD"),
                     },
                     { where: { id: blogData.id } }
                 );
 
                 try {
-                    const videos = await Video.findAll({
-                        where: { id: videos_id },
-                    });
+                    if (videos_id && videos_id?.length > 0) {
+                        const videos = await Video.findAll({
+                            where: { id: videos_id },
+                        });
 
-                    await blogData.setVideos(videos);
+                        await blogData.setVideos(videos);
+                    }
                 } catch (error) {
                     console.log(error);
                 }
