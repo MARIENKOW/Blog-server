@@ -1,25 +1,61 @@
 import { Phone } from "../models/Phone.js";
 
 class Controller {
-    setPhones = async (req, res) => {
+    create = async (req, res) => {
         try {
-            const phones = req.body["phone"];
+            const { number } = req.body;
 
-            if (!phones || phones?.length === 0)
-                return res
-                    .status(400)
-                    .json({ "root.server": "Incorrect values" });
+            if (!number)
+                return res.status(400).json({ number: "number not found" });
 
-            await Phone.destroy({
-                where: {},
-                truncate: true,
+            await Phone.create({
+                number,
+            });
+            return res.status(200).json(true);
+        } catch (e) {
+            console.log(e);
+            res.status(500).json(e?.message);
+        }
+    };
+    delete = async (req, res) => {
+        try {
+            const { id } = req.params;
+            if (!id) return res.status(400).json("id is not found");
+            const phoneData = await Phone.findOne({
+                where: {
+                    id,
+                },
             });
 
-            await Phone.bulkCreate(phones.map((number) => ({ number })));
+            if (!phoneData) return res.status(404).json("phone is not found");
 
-            const videos = await Phone.findAll();
+            await phoneData.destroy({ where: { id } });
+            return res.status(200).json(true);
+        } catch (e) {
+            console.log(e);
+            res.status(500).json(e?.message);
+        }
+    };
+    update = async (req, res) => {
+        try {
+            const {number} = req.body;
 
-            return res.status(200).json(videos);
+            const { id } = req.params;
+
+            if (!number || !id)
+                return res.status(400).json({ number: "Incorrect values" });
+
+            const phoneData = await Phone.findOne({
+                where: {
+                    id,
+                },
+            });
+
+            if (!phoneData) return res.status(404).json("phone not found");
+
+            await Phone.update({ number }, { where: { id: phoneData.id } });
+
+            return res.status(200).json(true);
         } catch (e) {
             console.log(e);
             res.status(500).json(e?.message);
