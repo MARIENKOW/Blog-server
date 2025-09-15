@@ -30,6 +30,11 @@ export const Blog = sequelize.define(
             allowNull: false,
             defaultValue: false,
         },
+        is_short: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+        },
         body: {
             type: DataTypes.TEXT,
             allowNull: false,

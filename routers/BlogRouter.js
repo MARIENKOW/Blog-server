@@ -16,6 +16,7 @@ BlogRouter.put(
     autAdminMiddelware,
     BlogController.setImportant
 );
+BlogRouter.put("/short/:id", autAdminMiddelware, BlogController.setShort);
 
 BlogRouter.get("/:id", BlogController.getById);
 BlogRouter.delete("/:id", autAdminMiddelware, BlogController.delete);

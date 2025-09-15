@@ -157,6 +157,7 @@ class Controller {
     getShort = async (req, res) => {
         try {
             const blogData = await Blog.findAll({
+                where: { is_short: true },
                 attributes: { exclude: ["body"] },
                 // include: [
                 //     {
@@ -343,6 +344,34 @@ class Controller {
             await Blog.update(
                 {
                     is_important: toBoolean(is_important),
+                },
+                { where: { id } }
+            );
+            return res.status(200).json(true);
+        } catch (e) {
+            console.log(e);
+            res.status(500).json(e?.message);
+        }
+    };
+    setShort = async (req, res) => {
+        try {
+            const { is_short } = req.body;
+
+            const { id } = req.params;
+
+            if (!id)
+                return res
+                    .status(400)
+                    .json({ "root.server": "Incorrect values" });
+
+            function toBoolean(value) {
+                if (value === "true") return true;
+                if (value === "false") return false;
+                return Boolean(value); // на случай других типов
+            }
+            await Blog.update(
+                {
+                    is_short: toBoolean(is_short),
                 },
                 { where: { id } }
             );
