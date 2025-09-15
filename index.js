@@ -11,6 +11,8 @@ import { Blog } from "./models/Blog.js";
 import { Img } from "./models/Img.js";
 import { Video } from "./models/Video.js";
 import { Admin } from "./models/Admin.js";
+import PhoneRouter from "./routers/PhoneRouter.js";
+import { Phone } from "./models/Phone.js";
 
 const asModels = (models) => {
     Object.values(models).forEach((model) => {
@@ -20,7 +22,7 @@ const asModels = (models) => {
     });
 };
 
-asModels({ Blog, Img, Video, Admin });
+asModels({ Blog, Img, Video, Admin, Phone });
 
 dotenv.config();
 
@@ -50,6 +52,7 @@ app.use("/api/meta", express.static("./meta"));
 app.use("/api/Admin", AdminRouter);
 app.use("/api/Blog", BlogRouter);
 app.use("/api/Video", VideoRouter);
+app.use("/api/Phone", PhoneRouter);
 
 const web = http.Server(app);
 
